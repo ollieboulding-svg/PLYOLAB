@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Plyo Lab</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- html2canvas + jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logoDot"></div>
+        <div>
+          <div class="brandName">PLYO LAB</div>
+          <div class="brandTag">Test • Track • Improve</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="tab active" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="assessment">Assessment</button>
+        <button class="tab" data-tab="howto">How to Test</button>
+      </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="heroBg"></div>
+      <div class="heroContent">
+        <h1>Your Performance Hub</h1>
+        <p>Simple testing. Clear feedback. A plan to improve.</p>
+
+        <div class="heroStats">
+          <div class="statCard">
+            <div class="statLabel">Performance Score</div>
+            <div class="statValue" id="dashScore">--</div>
+            <div class="statSub" id="dashLevel">No Assessment Yet</div>
+          </div>
+          <div class="statCard">
+            <div class="statLabel">Summary</div>
+            <div class="statValue small" id="dashSummary">Run a baseline to see your results.</div>
+            <div class="statSub" id="dashLastTest">No tests saved yet.</div>
+          </div>
+          <div class="statCard">
+            <div class="statLabel">Next Focus</div>
+            <div class="statValue small" id="dashNextFocus">Complete a baseline to unlock priorities.</div>
+            <div class="statSub">Based on lowest area</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <section class="panel show" id="panel-dashboard">
+        <div class="grid2">
+          <div class="card">
+            <div class="cardTitle">Quick Actions</div>
+            <div class="btnRow">
+              <button class="btn primary" id="goAssessment">Run Assessment</button>
+              <button class="btn" id="downloadPdfBtn">Download Latest PDF</button>
+              <button class="btn danger" id="resetAllBtn">Reset All Data</button>
+            </div>
+            <div class="hint">
+              Tip: run a <b>Baseline</b> first. Use <b>Retest</b> after 4–6 weeks.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardTitle">Assessment History</div>
+            <div id="historyList" class="historyList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ASSESSMENT -->
+      <section class="panel" id="panel-assessment">
+        <div class="grid2">
+          <div class="card">
+            <div class="cardTitle">Athlete Details</div>
+
+            <div class="formGrid">
+              <label>
+                Athlete name (optional)
+                <input id="athleteName" placeholder="e.g. Oliver" />
+              </label>
+
+              <label>
+                Gender
+                <select id="gender">
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                </select>
+              </label>
+
+              <label>
+                Age group
+                <select id="ageGroup"></select>
+              </label>
+
+              <label>
+                Sport
+                <select id="sport">
+                  <option>Football</option>
+                  <option>Athletics</option>
+                  <option>Rugby</option>
+                  <option>Hockey</option>
+                  <option>Basketball</option>
+                  <option>American Football</option>
+                  <option>Other</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="cardTitle">Enter Test Results</div>
+
+            <div class="formGrid">
+              <label>
+                20m sprint (seconds)
+                <input id="sprint20" type="number" step="0.01" placeholder="e.g. 3.40" />
+              </label>
+
+              <label>
+                Vertical jump (cm)
+                <input id="vert" type="number" step="0.1" placeholder="e.g. 32" />
+              </label>
+
+              <label>
+                Broad jump (cm)
+                <input id="broad" type="number" step="0.1" placeholder="e.g. 190" />
+              </label>
+
+              <label>
+                Push-ups (max reps)
+                <input id="pushups" type="number" step="1" placeholder="e.g. 25" />
+              </label>
+
+              <label>
+                1km run time (mm.ss)
+                <input id="run1k" placeholder="e.g. 3.56 (3m56s)" />
+                <div class="tiny">Accepts <b>3.56</b> or <b>3:56</b>. Use one dot.</div>
+              </label>
+            </div>
+
+            <div class="btnRow">
+              <button class="btn primary" id="baselineBtn">Save Baseline</button>
+              <button class="btn" id="retestBtn" disabled>Save Retest</button>
+              <button class="btn" id="resetInputsBtn">Reset Inputs</button>
+            </div>
+
+            <div class="hint">
+              Baseline saves your first test. Retest compares against baseline and overlays on the chart.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardTitle">Results</div>
+
+            <div class="traffic" id="trafficList"></div>
+
+            <div class="divider"></div>
+
+            <div class="cardTitle">Bar Chart Comparison</div>
+            <div class="chartWrap">
+              <canvas id="performanceChart" width="900" height="420"></canvas>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="cardTitle">Measurement vs Age Standard</div>
+            <div class="tableWrap">
+              <table id="compareTable">
+                <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Your Result</th>
+                  <th>Age Standard</th>
+                  <th>Percentile (est.)</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="cardTitle">What to Focus on Next</div>
+            <div id="recommendations" class="recs">
+              Run a baseline to unlock your priorities.
+            </div>
+
+            <div class="btnRow">
+              <button class="btn primary" id="pdfBtn">Download PDF Report</button>
+            </div>
+
+            <!-- PDF CAPTURE AREA -->
+            <div id="pdfContent" class="pdfContent">
+              <div class="pdfHeader">
+                <div>
+                  <div class="pdfTitle">Plyo Lab Performance Report</div>
+                  <div class="pdfSub" id="pdfMeta">Complete a baseline to generate your report.</div>
+                </div>
+                <div class="pdfBadge" id="pdfScoreBadge">--</div>
+              </div>
+
+              <div class="pdfSection">
+                <div class="pdfSectionTitle">Traffic Light Summary</div>
+                <div id="pdfTraffic" class="pdfTraffic"></div>
+              </div>
+
+              <div class="pdfSection">
+                <div class="pdfSectionTitle">Chart</div>
+                <div class="pdfChart">
+                  <img id="chartImage" alt="Chart capture" />
+                </div>
+              </div>
+
+              <div class="pdfSection">
+                <div class="pdfSectionTitle">Comparison Table</div>
+                <div id="pdfTable"></div>
+              </div>
+
+              <div class="pdfSection">
+                <div class="pdfSectionTitle">Next Focus (4–6 weeks)</div>
+                <div id="pdfRecs"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW TO TEST -->
+      <section class="panel" id="panel-howto">
+        <div class="card">
+          <div class="cardTitle">How to Test (quick guide)</div>
+          <p class="hint">
+            Keep conditions consistent: same surface, same warm-up, same technique. Record your best attempt.
+          </p>
+
+          <div class="howGrid">
+            <div class="howCard">
+              <div class="howTitle">20m Sprint</div>
+              <ul>
+                <li>Flat surface (track best)</li>
+                <li>Standing start</li>
+                <li>2–3 attempts, full rest</li>
+              </ul>
+              <div class="tiny">Add video: paste YouTube embed in code later.</div>
+            </div>
+
+            <div class="howCard">
+              <div class="howTitle">Vertical Jump</div>
+              <ul>
+                <li>Wall + chalk or device</li>
+                <li>Two-foot takeoff</li>
+                <li>Record best of 2–3</li>
+              </ul>
+            </div>
+
+            <div class="howCard">
+              <div class="howTitle">Broad Jump</div>
+              <ul>
+                <li>Two-foot takeoff</li>
+                <li>Measure to back of heel</li>
+                <li>Stick landing</li>
+              </ul>
+            </div>
+
+            <div class="howCard">
+              <div class="howTitle">Push-ups</div>
+              <ul>
+                <li>Full lockout</li>
+                <li>Consistent depth</li>
+                <li>Stop when form breaks</li>
+              </ul>
+            </div>
+
+            <div class="howCard">
+              <div class="howTitle">1km Run</div>
+              <ul>
+                <li>Track or flat route</li>
+                <li>Continuous effort</li>
+                <li>Enter as mm.ss (3.56)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
