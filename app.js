@@ -405,7 +405,6 @@ function renderDashboard(){
   }).join("");
 }
 
-// ----- PDF Export (reliable: html2canvas + jsPDF) -----
 async function exportPdf(){
   const el = $("pdfContent");
   if(!el){ alert("Nothing to export yet."); return; }
@@ -413,9 +412,18 @@ async function exportPdf(){
   try{
     const { jsPDF } = window.jspdf;
 
-    // ensure latest chart image is present
-    $("chartImage").src = $("performanceChart").toDataURL("image/png", 1.0);
+    // 1) Force chart update and create a fresh PNG for the PDF
+    if (chartInstance) {
+      chartInstance.update();
+      await new Promise(r => setTimeout(r, 150)); // let canvas paint
+    }
+    const chartCanvas = $("performanceChart");
+    if (chartCanvas) {
+      $("chartImage").src = chartCanvas.toDataURL("image/png", 1.0);
+      await new Promise(r => setTimeout(r, 150)); // let <img> load
+    }
 
+    // 2) Capture the PDF content AFTER the chart image is ready
     const canvas = await html2canvas(el, {
       scale: 2,
       backgroundColor: "#0b0b10",
@@ -463,6 +471,7 @@ async function exportPdf(){
     alert("PDF export failed. Try desktop if on mobile, or ensure popups are allowed.");
   }
 }
+
 
 // ----- Events -----
 function bind(){
